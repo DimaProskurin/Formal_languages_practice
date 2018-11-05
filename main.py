@@ -60,7 +60,7 @@ def build_language(RPN):
 
 
 def find_max_len_subword_in_language(language, word):
-    max_len = 0
+    max_len = -1
     subwords = all_subwords(word)
     for subword in subwords:
         if subword in language and len(subword) > max_len:
@@ -69,11 +69,18 @@ def find_max_len_subword_in_language(language, word):
     return max_len
 
 
-input_RPN = input()
-input_word = input()
-WORD_LEN = len(input_word)
+WORD_LEN = 3  # default value for tests
 
-try:
-    print(find_max_len_subword_in_language(build_language(input_RPN), input_word))
-except(Exception):
-    print('ERROR')
+if __name__ == '__main__':
+    input_RPN = input()
+    input_word = input()
+    WORD_LEN = len(input_word)
+
+    try:
+        answer = find_max_len_subword_in_language(build_language(input_RPN), input_word)
+        if answer == -1:
+            print('INF')
+        else:
+            print(answer)
+    except Exception:
+        print('ERROR')
