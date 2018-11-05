@@ -45,5 +45,18 @@ class TestTaskMethods(unittest.TestCase):
         self.assertEqual(find_max_len_subword_in_language({'', 'bab', 'cab'}, 'a'), 0)
 
 
+class TestErrorsMethods(unittest.TestCase):
+    def test_build_language(self):
+        try:
+            build_language('++++')
+            build_language('abacaba')
+            build_language('a*a+b.c+')
+        except Exception:
+            self.assertEqual(1, 1)
+            return
+
+        self.assertEqual(1, 0)
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -19,6 +19,8 @@ def concat(first_set, second_set):
 def iteration_clini(input_set):
     result = set()
     result.add('')
+    if '' in input_set:
+        input_set.remove('')
 
     current_iteration = input_set
     while len(current_iteration) > 0:
@@ -54,6 +56,8 @@ def build_language(RPN):
                 else:
                     stack.append(concat(operand_second, operand_first))
         else:
+            if char == '1':
+                char = ''
             stack.append(set(char))
 
     return stack[0]
