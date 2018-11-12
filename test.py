@@ -1,56 +1,74 @@
 import unittest
+from main import Matrix, WORD_LEN
 from main import merge, concat, iteration_clini
-from main import all_subwords
-from main import build_language, find_max_len_subword_in_language
+from main import build_subwords_matrix, find_max_len_subword_in_subwords_matrix
 
 
 class TestLanguageMethods(unittest.TestCase):
     def test_merge(self):
-        self.assertEqual(merge({'a', 'b'}, {'b', 'c'}), {'a', 'b', 'c'})
-        self.assertEqual(merge({'a', 'b'}, {'c', 'd'}), {'a', 'b', 'c', 'd'})
-        self.assertEqual(merge({''}, {'ba', 'cd'}), {'', 'ba', 'cd'})
+        matrix_first = Matrix(WORD_LEN)
+        matrix_first.empty_word = True
+        matrix_first.subwords[0][0] = 1
+
+        matrix_second = Matrix(WORD_LEN)
+        matrix_second.empty_word = False
+        matrix_second.subwords[1][1] = 1
+
+        matrix = merge(matrix_first, matrix_second)
+
+        self.assertEqual(matrix.empty_word, True)
+        self.assertEqual(matrix.subwords[0][0], 1)
+        self.assertEqual(matrix.subwords[1][1], 1)
+        self.assertEqual(matrix.subwords[0][1], 0)
 
     def test_concat(self):
-        self.assertEqual(concat({'a'}, {'b', 'c'}), {'ab', 'ac'})
-        self.assertEqual(concat({'ab', 'ba'}, {'b', 'c'}), {'abb', 'abc', 'bab', 'bac'})
-        self.assertEqual(concat({''}, {'bab', 'cba'}), {'bab', 'cba'})
+        word = 'ab'
+        matrix_first = Matrix(len(word))
+        matrix_second = Matrix(len(word))
+        matrix_first.subwords[0][0] = 1
+        matrix_second.subwords[1][1] = 1
+
+        matrix = concat(matrix_first, matrix_second, word)
+
+        self.assertEqual(matrix.empty_word, False)
+        self.assertEqual(matrix.subwords[0][0], 0)
+        self.assertEqual(matrix.subwords[0][1], 1)
 
     def test_iteration_clini(self):
-        self.assertEqual(iteration_clini({'a'}), {'', 'a', 'aa', 'aaa'})
-        self.assertEqual(iteration_clini({'a', 'b'}), {'', 'a', 'b', 'aa', 'ab', 'ba', 'bb',
-                                                       'aaa', 'aab', 'aba', 'abb', 'baa', 'bab',
-                                                       'bba', 'bbb'})
+        word = 'ab'
+        matrix = Matrix(len(word))
+        matrix.subwords[0][0] = 1
 
+        matrix = iteration_clini(matrix, word)
 
-class TestAdditionMethods(unittest.TestCase):
-    def test_all_subwords(self):
-        self.assertEqual(all_subwords('ab'), {'', 'a', 'b', 'ab'})
-        self.assertEqual(all_subwords(''), {''})
-        self.assertEqual(all_subwords('a'), {'', 'a'})
-        self.assertEqual(all_subwords('aba'), {'', 'a', 'ab', 'aba', 'b', 'ba'})
+        self.assertEqual(matrix.empty_word, True)
+        self.assertEqual(matrix.subwords[0][0], 1)
+        self.assertEqual(matrix.subwords[1][1], 0)
 
 
 class TestTaskMethods(unittest.TestCase):
-    def test_build_language(self):
-        self.assertEqual(build_language('ab+bc+.'), {'ab', 'ac', 'bb', 'bc'})
-        self.assertEqual(build_language('ab+*'), {'', 'a', 'b', 'aa', 'ab', 'ba', 'bb',
-                                                  'aaa', 'aab', 'aba', 'abb', 'baa',
-                                                  'bab', 'bba', 'bbb'})
-        self.assertEqual(build_language('a'), {'a'})
+    def test_build_subwords_matrix(self):
+        word = 'ab'
+        rpn = 'ab+ab+.'
+        matrix = build_subwords_matrix(rpn, word)
 
-    def test_find_max_len_subword_in_language(self):
-        self.assertEqual(find_max_len_subword_in_language({'ab', 'ac', 'bb', 'bc'}, 'ab'), 2)
-        self.assertEqual(find_max_len_subword_in_language({'ab', 'aa', 'ba', 'bb'}, 'cc'), -1)
-        self.assertEqual(find_max_len_subword_in_language({'a'}, 'abcd'), 1)
-        self.assertEqual(find_max_len_subword_in_language({'', 'bab', 'cab'}, 'a'), 0)
+        self.assertEqual(matrix.empty_word, False)
+        self.assertEqual(matrix.subwords[0][1], 1)
+        self.assertEqual(matrix.subwords[0][0], 0)
+
+    def test_find_max_len_subword_in_subwords_matrix(self):
+        matrix = Matrix(WORD_LEN)
+        matrix.empty_word = True
+
+        self.assertEqual(find_max_len_subword_in_subwords_matrix(matrix), 0)
 
 
 class TestErrorsMethods(unittest.TestCase):
     def test_build_language(self):
         try:
-            build_language('++++')
-            build_language('abacaba')
-            build_language('a*a+b.c+')
+            build_subwords_matrix('++++', 'word')
+            build_subwords_matrix('abacaba', 'word')
+            build_subwords_matrix('a*a+b.c+', 'word')
         except Exception:
             self.assertEqual(1, 1)
             return

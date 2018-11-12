@@ -1,79 +1,122 @@
-def merge(first_set, second_set):
-    result = first_set.union(second_set)
-    for word in result:
-        if len(word) > WORD_LEN:
-            result.remove(word)
-    return result
+class Matrix:
+    def __init__(self, word_len):
+        self.subwords = [[0] * word_len for i in range(word_len)]
+        self.empty_word = False
 
 
-def concat(first_set, second_set):
-    result = set()
-    for word_in_first_set in first_set:
-        for word_in_second_set in second_set:
-            if len(word_in_first_set + word_in_second_set) <= WORD_LEN:
-                result.add(word_in_first_set + word_in_second_set)
+def merge(matrix_first, matrix_second):
+    matrix_result = Matrix(len(matrix_first.subwords))
+    for i in range(len(matrix_first.subwords)):
+        for j in range(len(matrix_first.subwords[i])):
+            matrix_result.subwords[i][j] = (matrix_first.subwords[i][j]
+                                            + matrix_second.subwords[i][j]) % 2
 
-    return result
-
-
-def iteration_clini(input_set):
-    result = set()
-    result.add('')
-    if '' in input_set:
-        input_set.remove('')
-
-    current_iteration = input_set
-    while len(current_iteration) > 0:
-        for word in current_iteration:
-            result.add(word)
-
-        current_iteration = concat(current_iteration, input_set)
-
-    return result
+    matrix_result.empty_word = True if matrix_first.empty_word or matrix_second.empty_word else False
+    return matrix_result
 
 
-def all_subwords(word):
-    result = set()
-    for i in range(len(word) + 1):
-        for j in range(i, len(word) + 1):
-            result.add(word[i: j])
-    return result
+def concat(matrix_first, matrix_second, word):
+    matrix_result = Matrix(len(matrix_first.subwords))
+
+    for first_word_start in range(len(matrix_first.subwords)):
+        for first_word_end in range(len(matrix_first.subwords[first_word_start])):
+            for second_word_start in range(len(matrix_second.subwords)):
+                for second_word_end in range(len(matrix_second.subwords[second_word_start])):
+                    if matrix_first.subwords[first_word_start][first_word_end] == 1 and \
+                            matrix_second.subwords[second_word_start][second_word_end] == 1:
+                        first_word = word[first_word_start:first_word_end + 1]
+                        second_word = word[second_word_start:second_word_end + 1]
+                        new_word = first_word + second_word
+                        if new_word in word:
+                            new_word_start = word.find(new_word)
+                            new_word_end = new_word_start + len(new_word) - 1
+                            matrix_result.subwords[new_word_start][new_word_end] = 1
+
+    if matrix_first.empty_word:
+        for second_word_start in range(len(matrix_second.subwords)):
+            for second_word_end in range(len(matrix_second.subwords[second_word_start])):
+                if matrix_second.subwords[second_word_start][second_word_end] == 1:
+                    second_word = word[second_word_start:second_word_end + 1]
+                    new_word = second_word
+                    if new_word in word:
+                        new_word_start = word.find(new_word)
+                        new_word_end = new_word_start + len(new_word) - 1
+                        matrix_result.subwords[new_word_start][new_word_end] = 1
+
+        if matrix_second.empty_word:
+            matrix_result.empty_word = True
+
+    if matrix_second.empty_word:
+        for first_word_start in range(len(matrix_first.subwords)):
+            for first_word_end in range(len(matrix_first.subwords[first_word_start])):
+                if matrix_first.subwords[first_word_start][first_word_end] == 1:
+                    first_word = word[first_word_start:first_word_end + 1]
+                    new_word = first_word
+                    if new_word in word:
+                        new_word_start = word.find(new_word)
+                        new_word_end = new_word_start + len(new_word) - 1
+                        matrix_result.subwords[new_word_start][new_word_end] = 1
+
+    return matrix_result
 
 
-def build_language(RPN):
+def iteration_clini(input_matrix, word):
+    matrix_result = Matrix(len(input_matrix.subwords))
+    matrix_result.empty_word = True
+
+    current_matrix = input_matrix
+    # n iterations
+    for i in range(len(input_matrix.subwords)):
+        matrix_result = merge(matrix_result, current_matrix)
+        current_matrix = concat(current_matrix, input_matrix, word)
+
+    return matrix_result
+
+
+def build_subwords_matrix(rpn, word):
     stack = []
 
-    for char in RPN:
+    for char in rpn:
         if char in ['+', '.', '*']:
             if char == '*':
                 operand = stack.pop()
-                stack.append(iteration_clini(operand))
+                stack.append(iteration_clini(operand, word))
             else:
                 operand_first = stack.pop()
                 operand_second = stack.pop()
                 if char == '+':
                     stack.append(merge(operand_first, operand_second))
                 else:
-                    stack.append(concat(operand_second, operand_first))
+                    stack.append(concat(operand_second, operand_first, word))
         else:
+            matrix = Matrix(WORD_LEN)
+
             if char == '1':
-                char = ''
-            stack.append(set(char))
+                matrix.empty_word = True
+            else:
+                index_start = word.find(char)
+                index_end = index_start
+                matrix.subwords[index_start][index_end] = 1
+
+            stack.append(matrix)
 
     return stack[0]
 
 
-def find_max_len_subword_in_language(language, word):
+def find_max_len_subword_in_subwords_matrix(matrix):
     max_len = -1
-    subwords = all_subwords(word)
-    for subword in subwords:
-        if subword in language and len(subword) > max_len:
-            max_len = len(subword)
+    if matrix.empty_word:
+        max_len = 0
+
+    for word_start in range(len(matrix.subwords)):
+        for word_end in range(len(matrix.subwords[word_start])):
+            if matrix.subwords[word_start][word_end] == 1 and word_end - word_start + 1 > max_len:
+                max_len = word_end - word_start + 1
 
     return max_len
 
 
-WORD_LEN = 3  # default value for tests
+WORD_LEN = 2  # default value for tests
 
 if __name__ == '__main__':
     input_RPN = input()
@@ -81,7 +124,7 @@ if __name__ == '__main__':
     WORD_LEN = len(input_word)
 
     try:
-        answer = find_max_len_subword_in_language(build_language(input_RPN), input_word)
+        answer = find_max_len_subword_in_subwords_matrix(build_subwords_matrix(input_RPN, input_word))
         if answer == -1:
             print('INF')
         else:
