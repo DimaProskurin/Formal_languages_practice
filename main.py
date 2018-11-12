@@ -8,8 +8,7 @@ def merge(matrix_first, matrix_second):
     matrix_result = Matrix(len(matrix_first.subwords))
     for i in range(len(matrix_first.subwords)):
         for j in range(len(matrix_first.subwords[i])):
-            matrix_result.subwords[i][j] = (matrix_first.subwords[i][j]
-                                            + matrix_second.subwords[i][j]) % 2
+            matrix_result.subwords[i][j] = min(1, matrix_first.subwords[i][j] + matrix_second.subwords[i][j])
 
     matrix_result.empty_word = True if matrix_first.empty_word or matrix_second.empty_word else False
     return matrix_result
@@ -64,12 +63,14 @@ def iteration_clini(input_matrix, word):
     matrix_result = Matrix(len(input_matrix.subwords))
     matrix_result.empty_word = True
 
+    input_matrix.empty_word = False
     current_matrix = input_matrix
     # n iterations
     for i in range(len(input_matrix.subwords)):
         matrix_result = merge(matrix_result, current_matrix)
         current_matrix = concat(current_matrix, input_matrix, word)
 
+    input_matrix.empty_word = True
     return matrix_result
 
 
